@@ -127,7 +127,10 @@ Qed.
 Theorem ev_double : forall n,
   ev (double n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction n.
+  - apply ev_0.
+  - apply (ev_SS (double n)). apply IHn.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -271,12 +274,20 @@ Proof.
 Theorem SSSSev__even : forall n,
   ev (S (S (S (S n)))) -> ev n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n E.
+  inversion E as [|n' E0].
+  inversion E0 as [|n'' E1].
+  apply E1.
+Qed.
 
 Theorem even5_nonsense :
   ev 5 -> 2 + 2 = 9.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros E.
+  inversion E as [|n' E0].
+  inversion E0 as [|n'' E1].
+  inversion E1.
+Qed.
 (** [] *)
 
 (** The way we've used [inversion] here may seem a bit
@@ -402,7 +413,11 @@ Qed.
 (** **** Exercise: 2 stars (ev_sum)  *)
 Theorem ev_sum : forall n m, ev n -> ev m -> ev (n + m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m E.
+  induction E.
+  - intros. apply H.
+  - intros H. apply (ev_SS (n + m)). apply IHE. apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced, optional (ev_alternate)  *)
@@ -421,7 +436,19 @@ Inductive ev' : nat -> Prop :=
 
 Theorem ev'_ev : forall n, ev' n <-> ev n.
 Proof.
- (* FILL IN HERE *) Admitted.
+  intros n.
+  split.
+  - intros E. induction E.
+    + apply ev_0.
+    + apply (ev_SS 0). apply ev_0.
+    + apply ev_sum. apply IHE1. apply IHE2.
+  - intros E. induction E.
+    + apply ev'_0.
+    + assert (S (S n) = (n + 2)).
+      { rewrite plus_comm. apply plus_1_l. }
+      rewrite H. apply (ev'_sum n 2).
+      apply IHE. apply ev'_2.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced, recommended (ev_ev__ev)  *)
@@ -431,7 +458,13 @@ Proof.
 Theorem ev_ev__ev : forall n m,
   ev (n+m) -> ev n -> ev m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m Enm En.
+  induction En.
+  - inversion Enm.
+    + simpl in Enm. apply Enm.
+    + simpl in Enm. apply Enm.
+  - inversion Enm. apply IHEn in H0. apply H0.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (ev_plus_plus)  *)
@@ -442,7 +475,23 @@ Proof.
 Theorem ev_plus_plus : forall n m p,
   ev (n+m) -> ev (n+p) -> ev (m+p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p Enm Enp.
+  apply (ev_sum (n + m) (n + p)) in Enm.
+  assert (n + m + (n + p) = (n + n) + (m + p)).
+  { rewrite (plus_assoc (n + m) n p).
+    rewrite <-(plus_assoc n m n).
+    rewrite (plus_comm m n).
+    rewrite (plus_assoc n n m).
+    rewrite <-(plus_assoc (n + n) m p).
+    reflexivity. }
+  rewrite H in Enm.
+  assert (ev (n + n)).
+  { apply ev_even_iff. exists n. rewrite <-double_plus. reflexivity. }
+  apply (ev_ev__ev (n + n) (m + p)) in Enm.
+  apply Enm.
+  apply H0.
+  apply Enp.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -530,14 +579,14 @@ Inductive next_even : nat -> nat -> Prop :=
 (** Define an inductive binary relation [total_relation] that holds
     between every pair of natural numbers. *)
 
-(* FILL IN HERE *)
+Inductive total_relation : nat -> nat -> Prop :=
+  | tot_rel : forall n m, total_relation n m.
 (** [] *)
 
 (** **** Exercise: 2 stars, optional (empty_relation)  *)
 (** Define an inductive binary relation [empty_relation] (on numbers)
     that never holds. *)
-
-(* FILL IN HERE *)
+Inductive empty_relation : nat -> nat -> Prop := .
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (le_exercises)  *)
@@ -547,45 +596,94 @@ Inductive next_even : nat -> nat -> Prop :=
 
 Lemma le_trans : forall m n o, m <= n -> n <= o -> m <= o.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros m n o.
+  induction o.
+  - intros mn no. inversion no. rewrite H in mn. inversion mn. apply le_n.
+  - intros mn no. inversion no.
+    + rewrite <-H. apply mn.
+    + apply IHo in mn. apply le_S. apply mn. apply H0.
+Qed.
 
 Theorem O_le_n : forall n,
   0 <= n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction n.
+  - apply le_n.
+  - apply le_S. apply IHn.
+Qed.
 
 Theorem n_le_m__Sn_le_Sm : forall n m,
   n <= m -> S n <= S m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m nm.
+  induction m.
+  - inversion nm. apply le_n.
+  - inversion nm.
+    + apply le_n.
+    + apply IHm in H0. apply le_S. apply H0.
+Qed.
 
 Theorem Sn_le_Sm__n_le_m : forall n m,
   S n <= S m -> n <= m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m nm.
+  induction m.
+  - inversion nm.
+    + apply le_n.
+    + inversion H0.
+  - inversion nm.
+    + apply le_n.
+    + apply le_S. apply IHm in H0. apply H0.
+Qed.
 
 Theorem le_plus_l : forall a b,
   a <= a + b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros a b.
+  induction b.
+  - rewrite <-plus_n_O. apply le_n.
+  - rewrite <-plus_n_Sm. apply le_S. apply IHb.
+Qed.
 
 Theorem plus_lt : forall n1 n2 m,
   n1 + n2 < m ->
   n1 < m /\ n2 < m.
 Proof.
  unfold lt.
- (* FILL IN HERE *) Admitted.
+ intros n1 n2 m.
+ generalize dependent n2.
+ generalize dependent n1.
+ induction m.
+ - intros n1 n2 H. inversion H.
+ - intros n1 n2 H. split.
+   + inversion H.
+     * apply n_le_m__Sn_le_Sm. apply le_plus_l.
+     * apply IHm in H1. destruct H1. apply le_S. apply H1.
+   + inversion H.
+     * apply n_le_m__Sn_le_Sm. rewrite plus_comm. apply le_plus_l.
+     * apply IHm in H1. destruct H1. apply le_S. apply H2.
+Qed.
 
 Theorem lt_S : forall n m,
   n < m ->
   n < S m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m nm.
+  unfold lt.
+  unfold lt in nm.
+  apply le_S.
+  apply nm.
+Qed.
 
 Theorem leb_complete : forall n m,
   leb n m = true -> n <= m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction n.
+  - intros. apply le_0_n.
+  - intros m H. destruct m.
+    + inversion H.
+    + apply n_le_m__Sn_le_Sm. apply IHn. apply H.
+Qed.
 
 (** Hint: The next one may be easiest to prove by induction on [m]. *)
 
@@ -593,20 +691,40 @@ Theorem leb_correct : forall n m,
   n <= m ->
   leb n m = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m.
+  generalize dependent n.
+  induction m.
+  - intros n H. inversion H. reflexivity.
+  - intros n H. inversion H.
+    + simpl. symmetry. apply leb_refl.
+    + apply IHm in H1. destruct n.
+      * reflexivity.
+      * simpl. apply Sn_le_Sm__n_le_m in H. apply IHm in H. apply H.
+Qed.
 
 (** Hint: This theorem can easily be proved without using [induction]. *)
 
 Theorem leb_true_trans : forall n m o,
   leb n m = true -> leb m o = true -> leb n o = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m o nm mo.
+  apply leb_correct.
+  apply leb_complete in nm.
+  apply leb_complete in mo.
+  apply (le_trans n m o).
+  apply nm.
+  apply mo.
+Qed.
 
 (** **** Exercise: 2 stars, optional (leb_iff)  *)
 Theorem leb_iff : forall n m,
   leb n m = true <-> n <= m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m.
+  split.
+  - apply leb_complete.
+  - apply leb_correct.
+Qed.
 (** [] *)
 
 Module R.
@@ -645,11 +763,28 @@ Inductive R : nat -> nat -> nat -> Prop :=
     in Coq? *)
 
 Definition fR : nat -> nat -> nat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+  := fun x y => x + y.
+
+Lemma R_n_m_nm : forall n m : nat, R n m (n + m).
+Proof.
+  induction n.
+  - intros m. induction m.
+    + apply c1.
+    + apply c3. apply IHm.
+  - intros m. apply c2. apply IHn.
+Qed.
 
 Theorem R_equiv_fR : forall m n o, R m n o <-> fR m n = o.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros m n o. split.
+  - intros H. induction H.
+    + reflexivity.
+    + simpl. rewrite IHR. reflexivity.
+    + unfold fR. rewrite <-plus_n_Sm. unfold fR in IHR. rewrite IHR. reflexivity.
+    + inversion IHR as [H1]. rewrite <-plus_n_Sm in H1. inversion H1 as [H2]. reflexivity.
+    + rewrite plus_comm. apply IHR.
+  - intros H. rewrite <-H. unfold fR. apply R_n_m_nm.
+Qed.
 (** [] *)
 
 End R.
@@ -690,7 +825,41 @@ End R.
       is a subsequence of [l3], then [l1] is a subsequence of [l3].
       Hint: choose your induction carefully! *)
 
-(* FILL IN HERE *)
+Inductive subseq : list nat -> list nat -> Prop :=
+  | subseq_e : forall l, subseq [] l
+  | subseq_s12 : forall x l1 l2, subseq l1 l2 -> subseq (x :: l1) (x :: l2)
+  | subseq_s2 : forall x l1 l2, subseq l1 l2 -> subseq l1 (x :: l2).
+
+Theorem subseq_refl : forall l : list nat, subseq l l.
+Proof.
+  induction l.
+  - apply subseq_e.
+  - apply subseq_s12. apply IHl.
+Qed.
+
+Theorem subseq_app : forall l1 l2 l3 : list nat,
+  subseq l1 l2 -> subseq l1 (l2 ++ l3).
+Proof.
+  intros l1 l2 l3 H.
+  induction H.
+  - apply subseq_e.
+  - apply subseq_s12. apply IHsubseq.
+  - apply subseq_s2. apply IHsubseq.
+Qed.
+
+(* Inspired by https://github.com/serras/sf-exercises/blob/master/chapter06.v#L265 *)
+Theorem subseq_trans : forall l1 l2 l3 : list nat,
+  subseq l1 l2 -> subseq l2 l3 -> subseq l1 l3.
+Proof.
+  intros l1 l2 l3 H12 H23. generalize dependent l1.
+  induction H23 as [l2'|yz l2' l3' H23'|z l2' l3' H23'].
+  - intros. inversion H12. apply subseq_e.
+  - intros l1 H12. inversion H12 as [l1'|xy l1'' l2'' H12''|xy l1'' l2'' H12''].
+    + apply subseq_e.
+    + apply subseq_s12. apply IHH23'. apply H12''.
+    + apply subseq_s2. apply IHH23'. apply H12''.
+  - intros l1 H12. apply subseq_s2. apply IHH23'. apply H12.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, optionalM (R_provability2)  *)
