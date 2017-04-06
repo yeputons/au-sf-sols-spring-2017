@@ -1167,7 +1167,12 @@ Fixpoint plus' (n : nat) (m : nat) : nat :=
     _does_ terminate on all inputs, but that Coq will reject because
     of this restriction. *)
 
-(* FILL IN HERE *)
+Fail Fixpoint bad_plus' (n : nat) (m : nat) : nat :=
+  match n, m with
+  | O, O => O
+  | O, S m' => S (bad_plus' O m')
+  | S n', m => S (bad_plus' n' m)
+  end.
 (** [] *)
 
 (* ################################################################# *)
