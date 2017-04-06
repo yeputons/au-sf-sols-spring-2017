@@ -943,7 +943,13 @@ Qed.
 
 (There is a hard way and an easy way to do this.) *)
 
-(* FILL IN HERE *)
+Lemma rev_injective : forall (l1 l2 : natlist), rev l1 = rev l2 -> l1 = l2.
+Proof.
+  intros.
+  rewrite <-(rev_involutive l1).
+  rewrite H.
+  apply rev_involutive.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
