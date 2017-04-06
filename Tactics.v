@@ -46,7 +46,8 @@ Theorem silly2 : forall (n m o p : nat),
      [n;o] = [m;p].
 Proof.
   intros n m o p eq1 eq2.
-  apply eq2. apply eq1.  Qed.
+  rewrite (eq2 n m). reflexivity. rewrite eq1. reflexivity.
+Qed.
 
 (** You may find it instructive to experiment with this proof
     and see if there is a way to complete it using just [rewrite]
@@ -76,7 +77,10 @@ Theorem silly_ex :
      evenb 3 = true ->
      oddb 4 = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  apply (H 3).
+  apply H0.
+Qed.
 (** [] *)
 
 (** To use the [apply] tactic, the (conclusion of the) fact
@@ -109,7 +113,11 @@ Theorem rev_exercise1 : forall (l l' : list nat),
      l = rev l' ->
      l' = rev l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  rewrite H.
+  symmetry.
+  apply (rev_involutive nat l').
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, optionalM (apply_rewrite)  *)
@@ -177,7 +185,11 @@ Example trans_eq_exercise : forall (n m o p : nat),
      (n + p) = m ->
      (n + p) = (minustwo o).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  apply trans_eq with m.
+  apply H0.
+  apply H.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -254,7 +266,12 @@ Example inversion_ex3 : forall (X : Type) (x y z : X) (l j : list X),
   y :: l = x :: j ->
   x = y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+  inversion H0.
+  symmetry.
+  apply H2.
+Qed.
 (** [] *)
 
 (** When used on a hypothesis involving an equality between
@@ -318,7 +335,9 @@ Example inversion_ex6 : forall (X : Type)
   y :: l = z :: j ->
   x = z.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+Qed.
 (** [] *)
 
 (** To summarize this discussion, suppose [H] is a hypothesis in the
@@ -409,7 +428,18 @@ Theorem plus_n_n_injective : forall n m,
      n = m.
 Proof.
   intros n. induction n as [| n'].
-    (* FILL IN HERE *) Admitted.
+  - intros. simpl in H. destruct m.
+    + reflexivity.
+    + rewrite <-(plus_n_Sm (S m) m) in H. inversion H.
+  - intros. destruct m.
+    + inversion H.
+    + rewrite <-(plus_n_Sm (S n') n') in H. rewrite (plus_Sn_m n' n') in H.
+      rewrite <-(plus_n_Sm (S m ) m ) in H. rewrite (plus_Sn_m m  m ) in H.
+      inversion H.
+      apply IHn' in H1.
+      rewrite H1.
+      reflexivity.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -565,7 +595,14 @@ Proof.
 Theorem beq_nat_true : forall n m,
     beq_nat n m = true -> n = m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n.
+  - intros. destruct m.
+    + reflexivity.
+    + inversion H.
+  - intros. destruct m.
+    + inversion H.
+    + inversion H. apply (IHn m) in H1. rewrite H1. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, advancedM (beq_nat_true_informal)  *)
@@ -690,7 +727,14 @@ Theorem nth_error_after_last: forall (n : nat) (X : Type) (l : list X),
      length l = n ->
      nth_error l n = None.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent n.
+  induction l.
+  - intros. reflexivity.
+  - intros. destruct n.
+    + inversion H.
+    + inversion H. apply IHl. reflexivity.
+Qed.
 (** [] *)
 
 
@@ -858,7 +902,18 @@ Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
   split l = (l1, l2) ->
   combine l1 l2 = l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X Y l.
+  induction l.
+  - intros. simpl in H. inversion H. reflexivity.
+  - intros. destruct x. simpl in H. destruct (split l).
+    destruct l1.
+    + inversion H.
+    + simpl. destruct l2.
+      * inversion H.
+      * inversion H.
+        assert (combine l1 l2 = l). { apply IHl. rewrite H2. rewrite H4. reflexivity. }
+        rewrite H0. reflexivity.
+Qed.
 (** [] *)
 
 (** However, [destruct]ing compound expressions requires a bit of
@@ -929,7 +984,23 @@ Theorem bool_fn_applied_thrice :
   forall (f : bool -> bool) (b : bool),
   f (f (f b)) = f b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct (f false) eqn:Hf.
+  - destruct (f true) eqn:Ht.
+    + destruct b.
+      * rewrite Ht. rewrite Ht. rewrite Ht. reflexivity.
+      * rewrite Hf. rewrite Ht. rewrite Ht. reflexivity.
+    + destruct b.
+      * rewrite Ht. rewrite Hf. rewrite Ht. reflexivity.
+      * rewrite Hf. rewrite Ht. rewrite Hf. reflexivity.
+  - destruct (f true) eqn:Ht.
+    + destruct b.
+      * rewrite Ht. rewrite Ht. rewrite Ht. reflexivity.
+      * rewrite Hf. rewrite Hf. rewrite Hf. reflexivity.
+    + destruct b.
+      * rewrite Ht. rewrite Hf. rewrite Hf. reflexivity.
+      * rewrite Hf. rewrite Hf. rewrite Hf. reflexivity.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -1002,7 +1073,14 @@ Proof.
 Theorem beq_nat_sym : forall (n m : nat),
   beq_nat n m = beq_nat m n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction n.
+  - intros. destruct m.
+    + reflexivity.
+    + reflexivity.
+  - intros. destruct m.
+    + reflexivity.
+    + simpl. apply IHn.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advancedM? (beq_nat_sym_informal)  *)
@@ -1022,7 +1100,22 @@ Theorem beq_nat_trans : forall n m p,
   beq_nat m p = true ->
   beq_nat n p = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction n.
+  - destruct p.
+    + intros. reflexivity.
+    + intros. destruct m.
+      * apply H0.
+      * inversion H.
+  - induction m.
+    + destruct p.
+      * intros. apply H.
+      * intros. inversion H.
+    + destruct p.
+      * intros. inversion H0.
+      * intros. apply (IHn m p).
+        simpl in H. apply H.
+        simpl in H0. apply H0.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advancedM (split_combine)  *)
@@ -1039,14 +1132,24 @@ Proof.
     and [l2] for [split] [combine l1 l2 = (l1,l2)] to be true?) *)
 
 Definition split_combine_statement : Prop
-  (* ("[: Prop]" means that we are giving a name to a
-     logical proposition here.) *)
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+  := forall (X Y : Type) (l1 : list X) (l2 : list Y),
+    length l1 = length l2 -> split (combine l1 l2) = (l1, l2).
 
 Theorem split_combine : split_combine_statement.
 Proof.
-(* FILL IN HERE *) Admitted.
-
+  unfold split_combine_statement.
+  intros X Y l1.
+  induction l1.
+  - intros. inversion H. destruct l2.
+    + reflexivity.
+    + inversion H1.
+  - intros. destruct l2.
+    + inversion H.
+    + simpl.
+      assert (split (combine l1 l2) = (l1, l2)).
+      { apply IHl1. simpl in H. inversion H. reflexivity. }
+      rewrite H0. reflexivity.
+Qed.
 
 (** [] *)
 
@@ -1059,7 +1162,13 @@ Theorem filter_exercise : forall (X : Type) (test : X -> bool)
      filter test l = x :: lf ->
      test x = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X test x.
+  induction l.
+  - intros. inversion H.
+  - intros. destruct (test x0) eqn:Hx0.
+    + simpl in H. rewrite Hx0 in H. inversion H. rewrite <-H1. apply Hx0.
+    + simpl in H. rewrite Hx0 in H. apply (IHl lf). apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced, recommended (forall_exists_challenge)  *)
