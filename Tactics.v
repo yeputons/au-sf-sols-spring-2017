@@ -1201,7 +1201,44 @@ Qed.
     Finally, prove a theorem [existsb_existsb'] stating that
     [existsb'] and [existsb] have the same behavior. *)
 
-(* FILL IN HERE *)
+Fixpoint forallb {X : Type} (f : X -> bool) (l : list X) :=
+  match l with
+  | [] => true
+  | (x::l') => (f x) && (forallb f l')
+  end.
+
+Example forallb_test_1 : forallb oddb [1;3;5;7;9] = true. Proof. reflexivity. Qed.
+Example forallb_test_2 : forallb negb [false;false] = true. Proof. reflexivity. Qed.
+Example forallb_test_3 : forallb evenb [0;2;4;5] = false. Proof. reflexivity. Qed.
+Example forallb_test_4 : forallb (beq_nat 5) [] = true. Proof. reflexivity. Qed.
+
+Fixpoint existsb {X : Type} (f : X -> bool) (l : list X) :=
+  match l with
+  | [] => false
+  | (x::l') => (f x) || (existsb f l')
+  end.
+
+Example existsb_test_1 : existsb (beq_nat 5) [0;2;3;6] = false. Proof. reflexivity. Qed.
+Example existsb_test_2 : existsb (andb true) [true;true;false] = true. Proof. reflexivity. Qed.
+Example existsb_test_3 : existsb oddb [1;0;0;0;0;3] = true. Proof. reflexivity. Qed.
+Example existsb_test_4 : existsb evenb [] = false. Proof. reflexivity. Qed.
+
+Fixpoint existsb' {X : Type} (f : X -> bool) (l : list X) :=
+  negb (forallb (fun x => negb (f x)) l).
+
+Theorem existsb_existsb' : forall {X : Type} (f : X -> bool) (l : list X),
+  (existsb f l) = (existsb' f l).
+Proof.
+  intros.
+  induction l.
+  - reflexivity.
+  - destruct (f x) eqn:H.
+    + simpl. rewrite H. reflexivity.
+    + simpl. rewrite H. simpl. rewrite IHl.
+      unfold existsb'. destruct l.
+      * reflexivity.
+      * reflexivity.
+Qed.
 (** [] *)
 
 (** $Date: 2016-10-08 18:36:21 -0400 (Sat, 08 Oct 2016) $ *)
