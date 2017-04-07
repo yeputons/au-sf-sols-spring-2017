@@ -863,19 +863,27 @@ Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, optionalM (R_provability2)  *)
-(** Suppose we give Coq the following definition:
+Module R_provability.
+(** Suppose we give Coq the following definition: *)
 
-    Inductive R : nat -> list nat -> Prop :=
-      | c1 : R 0 []
-      | c2 : forall n l, R n l -> R (S n) (n :: l)
-      | c3 : forall n l, R (S n) l -> R n l.
+Inductive R : nat -> list nat -> Prop :=
+  | c1 : R 0 []
+  | c2 : forall n l, R n l -> R (S n) (n :: l)
+  | c3 : forall n l, R (S n) l -> R n l.
 
-    Which of the following propositions are provable?
+(**   Which of the following propositions are provable? *)
 
-    - [R 2 [1;0]]
-    - [R 1 [1;2;1;0]]
-    - [R 6 [3;2;1;0]]  *)
+Example provability_1 : R 2 [1;0].
+Proof. apply c2. apply c2. apply c1. Qed.
 
+Example provability_2 : R 1 [1;2;1;0].
+Proof. apply c3. apply c2. apply c3. apply c3. apply c2. apply c2. apply c2. apply c1. Qed.
+
+Example provability_3 : ~(R 6 [3;2;1;0]).
+Proof.
+Admitted.
+
+End Module.
 (** [] *)
 
 
