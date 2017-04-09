@@ -883,7 +883,7 @@ Example provability_3 : ~(R 6 [3;2;1;0]).
 Proof.
 Admitted.
 
-End Module.
+End R_provability.
 (** [] *)
 
 
